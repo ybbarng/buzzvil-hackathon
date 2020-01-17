@@ -6,7 +6,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,7 +71,7 @@ public class AdManager {
         return result;
     }
 
-    public static View populateAd(final Context activityContext, final NativeAd nativeAd) {
+    public static View populateAd_old(final Context activityContext, final NativeAd nativeAd) {
         Log.d("MYAR", "populateAd");
         final Ad ad = nativeAd.getAd();
         final Creative.Type creativeType = ad.getCreative() == null ? null : ad.getCreative().getType();
@@ -121,9 +120,9 @@ public class AdManager {
         nativeAdView.setNativeAd(nativeAd);
 
         mediaView.addOnMediaErrorListener((@NonNull MediaView _mediaView, @NonNull VideoErrorStatus errorStatus, @Nullable String errorMessage) -> {
-                if (errorMessage != null) {
-                    Toast.makeText(_mediaView.getContext(), errorMessage, Toast.LENGTH_SHORT).show();
-                }
+            if (errorMessage != null) {
+                Toast.makeText(_mediaView.getContext(), errorMessage, Toast.LENGTH_SHORT).show();
+            }
         });
 
         nativeAdView.addOnNativeAdEventListener(new NativeAdView.OnNativeAdEventListener() {
@@ -161,6 +160,75 @@ public class AdManager {
 
         final ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(100, 100);
         interstitialView.setLayoutParams(layoutParams);
+
+        return interstitialView;
+    }
+
+    public static View populateAd(final Context activityContext, final NativeAd nativeAd) {
+        Log.d("MYAR", "populateAd");
+        final Ad ad = nativeAd.getAd();
+        final Creative.Type creativeType = ad.getCreative() == null ? null : ad.getCreative().getType();
+
+        final View interstitialView = LayoutInflater.from(activityContext).inflate(R.layout.ad_view, null, false);
+        final NativeAdView nativeAdView = interstitialView.findViewById(R.id.native_ad_view);
+        final TextView titleTextView = interstitialView.findViewById(R.id.title);
+        final MediaView mediaView = interstitialView.findViewById(R.id.mediaview);
+
+        mediaView.setCreative(ad.getCreative());
+        titleTextView.setText(ad.getTitle());
+        final List<View> clickableViews = new ArrayList<>();
+        clickableViews.add(titleTextView);
+        clickableViews.add(mediaView);
+
+        if (Creative.Type.IMAGE.equals(creativeType)) {
+            titleTextView.setVisibility(View.GONE);
+        } else {
+            titleTextView.setVisibility(View.VISIBLE);
+            clickableViews.add(titleTextView);
+        }
+
+        nativeAdView.setMediaView(mediaView);
+        nativeAdView.setClickableViews(clickableViews);
+        nativeAdView.setNativeAd(nativeAd);
+
+        mediaView.addOnMediaErrorListener((@NonNull MediaView _mediaView, @NonNull VideoErrorStatus errorStatus, @Nullable String errorMessage) -> {
+            if (errorMessage != null) {
+                Toast.makeText(_mediaView.getContext(), errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        nativeAdView.addOnNativeAdEventListener(new NativeAdView.OnNativeAdEventListener() {
+            @Override
+            public void onImpressed(final @NonNull NativeAdView view, final @NonNull NativeAd nativeAd) {
+                Toast.makeText(activityContext, "onImpressed", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onClicked(@NonNull NativeAdView view, @NonNull NativeAd nativeAd) {
+                Toast.makeText(activityContext, "onClicked", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRewardRequested(@NonNull NativeAdView view, @NonNull NativeAd nativeAd) {
+                Toast.makeText(activityContext, "onRewardRequested", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onRewarded(@NonNull NativeAdView view, @NonNull NativeAd nativeAd, @Nullable NativeAdRewardResult nativeAdRewardResult) {
+                Toast.makeText(activityContext, "onRewarded: " + nativeAdRewardResult, Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onParticipated(final @NonNull NativeAdView view, final @NonNull NativeAd nativeAd) {
+                Toast.makeText(activityContext, "onParticipated", Toast.LENGTH_SHORT).show();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        //ctaPresenter.bind(nativeAd);
+                    }
+                }, 1000);
+            }
+        });
 
         return interstitialView;
     }

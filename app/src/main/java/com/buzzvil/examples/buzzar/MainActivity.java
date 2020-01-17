@@ -114,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
         ViewRenderable.builder()
                 .setView(this, view)
+                .setSizer(new FixedWidthViewSizer(0.3f))
                 .build()
                 .thenAccept(result::complete)
                 .exceptionally(
