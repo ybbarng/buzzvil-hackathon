@@ -23,6 +23,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private static final long AD_LOADING_INTERVAL_MS = 30 * 1000;
 
     private ArFragment arFragment;
+    private Button createAdButton;
 
     private ArManager arManager;
     private Timer timer;
@@ -58,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_ux);
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
+        createAdButton = findViewById(R.id.create_ad_button);
 
         arFragment.setOnTapArPlaneListener(
                 (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
@@ -65,6 +68,9 @@ public class MainActivity extends AppCompatActivity {
                 });
 
         this.arManager = new ArManager(arFragment);
+
+        createAdButton.setOnClickListener(view -> this.createAd());
+
         this.timer = new Timer();
         timer.scheduleAtFixedRate(buildLoadAdTask(), AD_LOADING_INTERVAL_MS, AD_LOADING_INTERVAL_MS);
     }
@@ -102,18 +108,23 @@ public class MainActivity extends AppCompatActivity {
         return new TimerTask() {
             @Override
             public void run() {
-                final Pose newPosition = arManager.getRandomPosition();
-                if (newPosition == null) {
-                    return;
-                }
-                AdManager.loadAd(MainActivity.this)
-                        .thenCompose(nativeAd -> arManager.buildViewRenderable(MainActivity.this, AdManager.populateAd(MainActivity.this, nativeAd)))
-                        .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable))
-                        .exceptionally(throwable -> {
-                            Log.e("MYAR", "Error", throwable);
-                            return null;
-                        });
+                createAd();
             }
         };
+    }
+
+    private void createAd() {
+        final Pose newPosition = arManager.getRandomPosition();
+        if (newPosition == null) {
+            return;
+        }
+
+        AdManager.loadAd(this)
+                .thenCompose(nativeAd -> arManager.buildViewRenderable(MainActivity.this, AdManager.populateAd(MainActivity.this, nativeAd)))
+                .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable))
+                .exceptionally(throwable -> {
+                    Log.e("MYAR", "Error", throwable);
+                    return null;
+                });
     }
 }
