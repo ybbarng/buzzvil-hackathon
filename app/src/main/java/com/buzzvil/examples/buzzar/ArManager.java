@@ -87,8 +87,7 @@ public class ArManager {
             selectedIndex = random.nextInt(planes.length);
         } while (planes[selectedIndex].getType() != Plane.Type.HORIZONTAL_UPWARD_FACING);
 
-        return planes[selectedIndex].getSubsumedBy() == null ?
-                planes[selectedIndex] : planes[selectedIndex].getSubsumedBy();
+        return planes[selectedIndex];
     }
 
     /**
@@ -100,11 +99,11 @@ public class ArManager {
      * @return pose
      */
     private Pose getRandomPositionIn(final Plane plane) {
-        float maxX = plane.getExtentX() * 2;
-        float randomX = (maxX * random.nextFloat()) - plane.getExtentX();
+        float maxX = plane.getExtentX() * 2 / 2;
+        float randomX = (maxX * random.nextFloat()) - plane.getExtentX() / 2;
 
-        float maxZ = plane.getExtentZ() * 2;
-        float randomZ = (maxZ * random.nextFloat()) - plane.getExtentZ();
+        float maxZ = plane.getExtentZ() * 2 / 2;
+        float randomZ = (maxZ * random.nextFloat()) - plane.getExtentZ() / 2;
 
         Pose pose = plane.getCenterPose();
         float[] translation = pose.getTranslation();

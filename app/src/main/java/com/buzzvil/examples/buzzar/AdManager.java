@@ -232,5 +232,4 @@ public class AdManager {
 
         return interstitialView;
     }
-
 }
