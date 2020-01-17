@@ -33,7 +33,6 @@ import com.google.ar.core.Plane;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -89,11 +88,10 @@ public class MainActivity extends AppCompatActivity {
                     AnchorNode anchorNode = new AnchorNode(anchor);
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
 
-                    // Create the transformable AdView and add it to the anchor.
-                    TransformableNode adNode = new TransformableNode(arFragment.getTransformationSystem());
+                    // Create the AdView and add it to the anchor.
+                    AdNode adNode = new AdNode();
                     adNode.setParent(anchorNode);
                     adNode.setRenderable(adRenderable);
-                    adNode.select();
                 });
     }
 
