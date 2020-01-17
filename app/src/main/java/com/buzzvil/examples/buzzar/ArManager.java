@@ -46,7 +46,7 @@ public class ArManager {
         return adNode;
     }
 
-    public CompletableFuture<ViewRenderable> buildViewRenderable(final Context activityContext, final View view) {
+    public CompletableFuture<ViewRenderable> buildAdViewRenderable(final Context activityContext, final View view) {
         final CompletableFuture<ViewRenderable> result = new CompletableFuture<>();
 
         // When you build a Renderable, Sceneform loads its resources in the background while returning
@@ -64,6 +64,23 @@ public class ArManager {
         return result;
     }
 
+    public CompletableFuture<ViewRenderable> buildImageViewRenderable(final Context activityContext) {
+        final CompletableFuture<ViewRenderable> result = new CompletableFuture<>();
+
+        // When you build a Renderable, Sceneform loads its resources in the background while returning
+        // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
+        ViewRenderable.builder()
+                .setView(activityContext, R.layout.image_view)
+                .setSizer(new FixedWidthViewSizer(0.08f))
+                .build()
+                .thenAccept(result::complete)
+                .exceptionally(throwable -> {
+                    result.completeExceptionally(throwable);
+                    return null;
+                });
+
+        return result;
+    }
 
     private AnchorNode createAnchor(final Pose position) {
         final Anchor anchor = arFragment.getArSceneView().getSession().createAnchor(position);

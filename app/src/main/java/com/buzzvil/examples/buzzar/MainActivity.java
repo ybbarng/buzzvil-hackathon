@@ -50,6 +50,13 @@ public class MainActivity extends AppCompatActivity {
     private ArManager arManager;
     private Timer timer;
 
+    enum Mode {
+        IMAGE,
+        AD
+    }
+
+    private Mode mode;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
 
         this.timer = new Timer();
         timer.scheduleAtFixedRate(buildLoadAdTask(), AD_LOADING_INTERVAL_MS, AD_LOADING_INTERVAL_MS);
+
+        mode = BuildConfig.DEBUG ? Mode.IMAGE : Mode.AD;
     }
 
     /**
@@ -119,12 +128,20 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        AdManager.loadAd(this)
-                .thenCompose(nativeAd -> arManager.buildViewRenderable(MainActivity.this, AdManager.populateAd(MainActivity.this, nativeAd)))
-                .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable))
-                .exceptionally(throwable -> {
-                    Log.e("MYAR", "Error", throwable);
-                    return null;
-                });
+        switch (mode) {
+            case AD:
+                AdManager.loadAd(this)
+                        .thenCompose(nativeAd -> arManager.buildAdViewRenderable(MainActivity.this, AdManager.populateAd(MainActivity.this, nativeAd)))
+                        .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable))
+                        .exceptionally(throwable -> {
+                            Log.e("MYAR", "Error", throwable);
+                            return null;
+                        });
+                break;
+            case IMAGE:
+                arManager.buildImageViewRenderable(this)
+                        .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable));
+                break;
+        }
     }
 }
