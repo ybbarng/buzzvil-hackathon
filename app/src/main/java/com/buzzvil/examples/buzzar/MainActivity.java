@@ -22,22 +22,18 @@ import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
-import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.rendering.FixedWidthViewSizer;
-import com.google.ar.sceneform.rendering.ViewRenderable;
+import com.google.ar.core.Pose;
 import com.google.ar.sceneform.ux.ArFragment;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This is an example activity that uses the Sceneform UX package to make common AR tasks easier.
@@ -45,13 +41,14 @@ import java.util.concurrent.CompletableFuture;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final double MIN_OPENGL_VERSION = 3.0;
+    private static final long AD_LOADING_INTERVAL_MS = 30 * 1000;
 
     private ArFragment arFragment;
 
+    private ArManager arManager;
+    private Timer timer;
+
     @Override
-    @SuppressWarnings({"AndroidApiChecker", "FutureReturnValueIgnored"})
-    // CompletableFuture requires api level 24
-    // FutureReturnValueIgnored is not valid
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -64,18 +61,12 @@ public class MainActivity extends AppCompatActivity {
 
         arFragment.setOnTapArPlaneListener(
                 (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
-                    if (plane.getType() != Plane.Type.HORIZONTAL_UPWARD_FACING) {
-                        return;
-                    }
 
-                    AdManager.loadAd(this)
-                            .thenCompose(nativeAd -> buildViewRenderable(AdManager.populateAd(this, nativeAd)))
-                            .thenAccept(adRenderable -> createAdNode(hitResult, adRenderable))
-                            .exceptionally(throwable -> {
-                                Log.e("MYAR", "Error", throwable);
-                                return null;
-                            });
                 });
+
+        this.arManager = new ArManager(arFragment);
+        this.timer = new Timer();
+        timer.scheduleAtFixedRate(buildLoadAdTask(), AD_LOADING_INTERVAL_MS, AD_LOADING_INTERVAL_MS);
     }
 
     /**
@@ -107,44 +98,22 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    private CompletableFuture<ViewRenderable> buildViewRenderable(final View view) {
-        final CompletableFuture<ViewRenderable> result = new CompletableFuture<>();
-
-        // When you build a Renderable, Sceneform loads its resources in the background while returning
-        // a CompletableFuture. Call thenAccept(), handle(), or check isDone() before calling get().
-        ViewRenderable.builder()
-                .setView(this, view)
-                .setSizer(new FixedWidthViewSizer(0.3f))
-                .build()
-                .thenAccept(result::complete)
-                .exceptionally(
-                        throwable -> {
-                            this.onError("Unable to load ad view renderable");
-                            result.completeExceptionally(throwable);
+    private TimerTask buildLoadAdTask() {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                final Pose newPosition = arManager.getRandomPosition();
+                if (newPosition == null) {
+                    return;
+                }
+                AdManager.loadAd(MainActivity.this)
+                        .thenCompose(nativeAd -> arManager.buildViewRenderable(MainActivity.this, AdManager.populateAd(MainActivity.this, nativeAd)))
+                        .thenAccept(adRenderable -> arManager.createAdNode(newPosition, adRenderable))
+                        .exceptionally(throwable -> {
+                            Log.e("MYAR", "Error", throwable);
                             return null;
                         });
-
-        return result;
-    }
-
-    private void onError(final String message) {
-        Toast toast =
-                Toast.makeText(this, message, Toast.LENGTH_LONG);
-        toast.setGravity(Gravity.CENTER, 0, 0);
-        toast.show();
-    }
-
-    private void createAdNode(final HitResult hitResult, final ViewRenderable adRenderable) {
-        Log.d("MYAR", "createAdNode");
-
-        // Create the Anchor.
-        Anchor anchor = hitResult.createAnchor();
-        AnchorNode anchorNode = new AnchorNode(anchor);
-        anchorNode.setParent(arFragment.getArSceneView().getScene());
-
-        // Create the AdView and add it to the anchor.
-        AdNode adNode = new AdNode();
-        adNode.setParent(anchorNode);
-        adNode.setRenderable(adRenderable);
+            }
+        };
     }
 }
