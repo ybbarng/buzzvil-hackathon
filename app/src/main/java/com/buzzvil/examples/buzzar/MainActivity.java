@@ -80,6 +80,10 @@ public class MainActivity extends AppCompatActivity {
                         return;
                     }
 
+                    if (plane.getType() != Plane.Type.HORIZONTAL_UPWARD_FACING) {
+                        return;
+                    }
+
                     // Create the Anchor.
                     Anchor anchor = hitResult.createAnchor();
                     AnchorNode anchorNode = new AnchorNode(anchor);
