@@ -31,6 +31,7 @@ buildscript {
 
 allprojects {
     repositories {
+        maven { url "https://dl.bintray.com/buzzvil/maven/" }
         google()
         jcenter()
         mavenLocal()

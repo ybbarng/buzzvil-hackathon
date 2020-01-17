@@ -36,7 +36,24 @@ dependencies {
     // Alternatively, use ArSceneView without the UX dependency.
     //implementation "com.google.ar.sceneform:core:1.14.0"
 
-    implementation "com.android.support:appcompat-v7:28.0.0"
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:cardview-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+
+    implementation ("com.buzzvil:buzzad-benefit:1.5.8") {
+        // Pop is not released for public use yet.
+        // Exclude this module so that your app does not include any unnecessary permissions in the manifest.
+        exclude group: 'com.buzzvil', module: 'buzzad-benefit-pop'
+        exclude group: 'com.android.support', module: 'cardview-v7'
+        exclude group: 'com.android.support', module: 'design'
+        exclude group: 'com.android.support', module: 'customtabs'
+        exclude group: 'com.android.support', module: 'support-media-compat'
+        exclude group: 'com.android.support', module: 'support-v4'
+    }
+    implementation ("com.github.bumptech.glide:glide:4.11.0") {
+        exclude group: 'com.android.support'
+    }
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 }
 
 apply plugin: 'com.google.ar.sceneform.plugin'
